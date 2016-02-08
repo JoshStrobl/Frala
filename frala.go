@@ -11,7 +11,8 @@ import (
 	"strings"
 )
 
-var Config FralaConfig // Define Config as a Frala Config struct
+var Config FralaConfig        // Define Config as a Frala Config struct
+var CurrentParsingFile string // Define CurrentParsingFile as the file we're currently parsing
 
 // init
 func init() {
@@ -24,7 +25,9 @@ func init() {
 			fmt.Println("Unable to decode frala.json into the appropriate Frala configuration structure. Please verify the correctness of your config.")
 			os.Exit(1) // Die
 		}
-	} else { // If the config does not exist
+	}
+
+	if Config.DefaultLanguage == "" { // If no DefaultLanguage was provided
 		Config.DefaultLanguage = "en" // Default language to English
 	}
 }
@@ -37,6 +40,7 @@ func Parse(file string) (string, error) {
 	fileContentBytes, fileContentError := ioutil.ReadFile(file) // Read the file content and push error to fileContentError
 
 	if fileContentError == nil { /// If there was no error reading the file
+		CurrentParsingFile = file // Set CurrentParsingFile to this file
 		fileContent := string(fileContentBytes[:])
 		fileSplitLines := strings.Split(fileContent, "\n") // Split by new line
 
@@ -72,6 +76,8 @@ func ParseLine(lineContent string) string {
 				contentAfterFralaSyntax := syntaxEndSplit[1]                                  // Set Frala
 
 				newLineContent += parsedSyntax + contentAfterFralaSyntax
+			} else { // If this segment does not contain an end-syntax, meaning it is likely a segment prior to the syntax
+				newLineContent += lineSegment // Add the lineSegment to the newLineContent
 			}
 		}
 
@@ -104,24 +110,30 @@ func ParseSyntax(fralaSyntax string) string {
 
 	if decodeErr == nil { // If there was no decode error
 		if (fralaContext.Type == "fragment") && (fralaContext.Source != "") { // If this is a Fragment
-			fragmentContentBytes, fragmentContentIOErr := ioutil.ReadFile(fralaContext.Source) // Attempt to read the fragment
+			if fralaContext.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
+				restoreFileName := CurrentParsingFile // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
 
-			if fragmentContentIOErr == nil { // If there was no error reading the fragment file
-				parsedString = string(fragmentContentBytes[:]) // Set parsedString to fragment file content
-			} else { // If the fragment file does not exist
-				parsedString = fralaContext.Source + " does not exist."
+				fragmentContentBytes, fragmentContentIOErr := Parse(fralaContext.Source) // Attempt to read the fragment
+				CurrentParsingFile = restoreFileName                                     // Restore file name back to original state
+
+				if fragmentContentIOErr == nil { // If there was no error reading the fragment file
+					parsedString = string(fragmentContentBytes[:]) // Set parsedString to fragment file content
+				} else { // If the fragment file does not exist
+					parsedString = fralaContext.Source + " does not exist."
+				}
+			} else { // If we're attempting Fragment inception
+				parsedString = "I can't do that Dave. (Importing Fragment within itself)"
 			}
 		} else if (fralaContext.Type == "term") && (fralaContext.Source != "") { // If this is a term
+			var termExists bool          // Define termExists as a bool during our Config.Terms key/val check
 			if fralaContext.Lang == "" { // If no language is defined
 				fralaContext.Lang = Config.DefaultLanguage // Set to Default Language
 			}
 
-			termContent, termExists := Config.Terms[fralaContext.Source][fralaContext.Lang] // Get the Language value of this Source in Terms
+			parsedString, termExists = Config.Terms[fralaContext.Source][fralaContext.Lang] // Get the Language value of this Source in Terms
 
-			if termExists { // If the term exists
-				parsedString = termContent
-			} else { // If the term does not exist
-				parsedString = "Term " + fralaContext.Source + " is not translated into " + fralaContext.Lang
+			if !termExists { // If the term does not exist
+				parsedString = "Term " + fralaContext.Source + " is not translated into " + fralaContext.Lang // Change parsedString to err string
 			}
 		} else { // If the necessary syntax elements were not provided
 			parsedString = "Necessary Frala Syntax elements were not provided for this context."
