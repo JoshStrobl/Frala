@@ -6,6 +6,11 @@ Frala is fragment and translation engine. Frala enables you to separate out file
 
 **License:** `Apache 2.0`
 
+TODO:
+
+- [ ] Implement functionality for easy multi-page translation.
+- [ ] Implement Term JSON to .po and .po to Term JSON converters.
+
 ### Syntax
 
 Frala does all this by using a syntax similar to JSON and Mustache, in that it leverages `{` and `}`.
