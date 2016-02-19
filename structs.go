@@ -6,6 +6,7 @@ package frala
 // This is the configuration for Frala
 type FralaConfig struct {
 	DefaultLanguage string          // Default Language string, if not declared, default to en
+	Languages       []string        // Languages is a list of languages (string)
 	Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
 }
 
