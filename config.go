@@ -8,8 +8,7 @@ import (
 	"io/ioutil"
 )
 
-// ReadConfig
-// This function will read any frala.json file and update the Config
+// ReadConfig reads any frala.json file and update the Config
 func ReadConfig() error {
 	var configContent []byte
 	var readError error
@@ -23,14 +22,13 @@ func ReadConfig() error {
 			readError = errors.New("Unable to decode frala.json into the appropriate Frala configuration structure. Please verify the correctness of your config.")
 		}
 	} else { // If there was a read error
-		readError = errors.New("frala.json file does not exist.")
+		readError = errors.New("frala.json file does not exist")
 	}
 
 	return readError
 }
 
-// SaveConfig
-// This function will save the Config to frala.json
+// SaveConfig saves the Config to frala.json
 func SaveConfig() error {
 	var configContent []byte
 	var saveError error

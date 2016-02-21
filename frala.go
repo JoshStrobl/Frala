@@ -2,11 +2,15 @@
 
 package frala
 
-var Config FralaConfig        // Define Config as a Frala Config struct
-var CurrentParsingFile string // Define CurrentParsingFile as the file we're currently parsing
-var InitError error           // Define InitError as any potential error from initializing Frala
+// Config is the configuration of Frala
+var Config ConfigOptions
 
-// init
+// CurrentParsingFile is the file we're currently parsing
+var CurrentParsingFile string
+
+// InitError is any potential error from initializing Frala
+var InitError error
+
 func init() {
 	InitError = ReadConfig() // Read the config, setting it's content to Config and any error to readError
 

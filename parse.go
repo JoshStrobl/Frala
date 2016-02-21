@@ -9,8 +9,7 @@ import (
 	"strings"
 )
 
-// MultiParse
-// This function will parse multiple files provided and return a map of ParseResponses
+// MultiParse parses multiple files provided and return a map of ParseResponses
 func MultiParse(files []string) map[string]ParseResponse {
 	parserResponses := make(map[string]ParseResponse)
 
@@ -21,8 +20,7 @@ func MultiParse(files []string) map[string]ParseResponse {
 	return parserResponses
 }
 
-// Parse
-// This function will parse a file provided and return a ParseResponse
+// Parse parses a file provided and return a ParseResponse
 func Parse(file string) ParseResponse {
 	parserResponse := ParseResponse{}
 	fileContentBytes, fileContentError := ioutil.ReadFile(file) // Read the file content and push error to fileContentError
@@ -52,8 +50,7 @@ func Parse(file string) ParseResponse {
 	return parserResponse
 }
 
-// ParseLine
-// This function will parse an individual line
+// ParseLine parses an individual line
 func ParseLine(lineContent string) string {
 	parsedLineContent := lineContent        // Default parsedLineContent as the lineContent
 	if strings.Contains(lineContent, "{") { // If the string contains Frala syntax
@@ -79,8 +76,7 @@ func ParseLine(lineContent string) string {
 	return parsedLineContent
 }
 
-// ParseSyntax
-// This function will parse a Frala syntax string and return the appropriate (if any) associated HTML content or term
+// ParseSyntax parses a Frala syntax string and return the appropriate (if any) associated HTML content or term
 func ParseSyntax(fralaSyntax string) string {
 	parsedString := fralaSyntax // Default parsedString to fralaSyntax
 
