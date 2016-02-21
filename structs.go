@@ -22,3 +22,10 @@ type Context struct {
 	Source string `json:"src"`  // Source such as the word or link to fragment
 	Type   string `json:"type"` // Type of the Context (fragment or term)
 }
+
+// ParseResponse
+// ParseResponse is a struct that contains both the content of a file and associated parsing error
+type ParseResponse struct {
+	Content string // Content of the parsed file
+	Error   error  // Error that occurred during parsing
+}

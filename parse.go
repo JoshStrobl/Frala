@@ -9,14 +9,27 @@ import (
 	"strings"
 )
 
+// MultiParse
+// This function will parse multiple files provided and return a map of ParseResponses
+func MultiParse(files []string) map[string]ParseResponse {
+	parserResponses := make(map[string]ParseResponse)
+
+	for _, file := range files { // For each file
+		parserResponses[file] = Parse(file) // Define this file in parserResponses to ParserResponse provided by Parse
+	}
+
+	return parserResponses
+}
+
 // Parse
-// This function will parse a file provided and return either parsed contents or an error
-func Parse(file string) (string, error) {
-	var parsedString string
-	var parseError error
+// This function will parse a file provided and return a ParseResponse
+func Parse(file string) ParseResponse {
+	parserResponse := ParseResponse{}
 	fileContentBytes, fileContentError := ioutil.ReadFile(file) // Read the file content and push error to fileContentError
 
 	if fileContentError == nil { /// If there was no error reading the file
+		var parsedString string
+
 		CurrentParsingFile = file // Set CurrentParsingFile to this file
 		fileContent := string(fileContentBytes[:])
 		fileSplitLines := strings.Split(fileContent, "\n") // Split by new line
@@ -30,11 +43,13 @@ func Parse(file string) (string, error) {
 
 			parsedString += parsedLineContent + "\n"
 		}
+
+		parserResponse.Content = parsedString
 	} else {
-		parseError = errors.New("File does not exist.")
+		parserResponse.Error = errors.New("File does not exist.")
 	}
 
-	return parsedString, parseError
+	return parserResponse
 }
 
 // ParseLine
@@ -88,13 +103,12 @@ func ParseSyntax(fralaSyntax string) string {
 	if decodeErr == nil { // If there was no decode error
 		if (fralaContext.Type == "fragment") && (fralaContext.Source != "") { // If this is a Fragment
 			if fralaContext.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
-				restoreFileName := CurrentParsingFile // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+				restoreFileName := CurrentParsingFile                // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+				fragmentParserResponse := Parse(fralaContext.Source) // Attempt to read the fragment
+				CurrentParsingFile = restoreFileName                 // Restore file name back to original state
 
-				fragmentContentBytes, fragmentContentIOErr := Parse(fralaContext.Source) // Attempt to read the fragment
-				CurrentParsingFile = restoreFileName                                     // Restore file name back to original state
-
-				if fragmentContentIOErr == nil { // If there was no error reading the fragment file
-					parsedString = string(fragmentContentBytes[:]) // Set parsedString to fragment file content
+				if fragmentParserResponse.Error != nil { // If there was an error reading the fragment file
+					parsedString = fragmentParserResponse.Content // Set parsedString to fragment ParserResponse Content
 				} else { // If the fragment file does not exist
 					parsedString = fralaContext.Source + " does not exist."
 				}

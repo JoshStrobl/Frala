@@ -8,7 +8,6 @@ Frala is fragment and translation engine. Frala enables you to separate out file
 
 TODO:
 
-- [ ] Implement functionality for easy multi-page translation.
 - [ ] Implement Term JSON to .po and .po to Term JSON converters.
 
 ### Syntax
@@ -85,6 +84,16 @@ type FralaConfig struct {
 }
 ```
 
+#### ParseResponse
+
+ParseResponse is a struct that contains both the content of a file and associated parsing error
+
+``` go
+type ParseResponse struct {
+    Content string // Content of the parsed file
+    Error   error  // Error that occurred during parsing
+}
+```
 #### Term
 
 Term is a map[string]string, as each Term has a map of language -> value (where language is a string and value is a string)
@@ -124,12 +133,20 @@ func SaveConfig() error
 
 #### Parsing
 
-##### Parse
+##### MultiParse
 
-This function will parse a file provided and return either parsed contents or an error.
+This function will parse multiple files provided and return a map of ParseResponses
 
 ``` go
-func Parse(file string) (string, error)
+func MultiParse(files []string) map[string]ParseResponse
+```
+
+##### Parse
+
+This function will parse a file provided and return a ParseResponse.
+
+``` go
+func Parse(file string) ParseResponse
 ```
 
 ##### ParseLine
