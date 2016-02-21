@@ -79,8 +79,9 @@ This is the configuration for Frala.
 
 ``` go
 type FralaConfig struct {
-    DefaultLanguage string          // Default Language string, if not declared, default to en
-    Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
+	DefaultLanguage string          // Default Language string, if not declared, default to en
+	Languages       []string        // Languages is a list of languages (string)
+	Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
 }
 ```
 
@@ -92,9 +93,38 @@ Term is a map[string]string, as each Term has a map of language -> value (where 
 type Term map[string]string
 ```
 
+### Variables
+
+``` go
+// Define CurrentParsingFile as the file we're currently parsing
+var CurrentParsingFile string
+// Define InitError as any potential error from initializing Frala
+var InitError error
+```
+
 ### Functions
 
-#### Parse
+#### Config
+
+##### ReadConfig
+
+This function will read any frala.json file and update the Config.
+
+``` go
+func ReadConfig() error
+```
+
+##### SaveConfig
+
+This function will save the Config to frala.json.
+
+``` go
+func SaveConfig() error
+```
+
+#### Parsing
+
+##### Parse
 
 This function will parse a file provided and return either parsed contents or an error.
 
@@ -102,7 +132,7 @@ This function will parse a file provided and return either parsed contents or an
 func Parse(file string) (string, error)
 ```
 
-#### ParseLine
+##### ParseLine
 
 This function will parse an individual line.
 
@@ -110,10 +140,52 @@ This function will parse an individual line.
 func ParseLine(lineContent string) string
 ```
 
-#### ParseSyntax
+##### ParseSyntax
 
 This function will parse a Frala syntax string and return the appropriate (if any) associated HTML content or term
 
 ``` go
 func ParseSyntax(fralaSyntax string) string
+```
+
+#### Terms
+
+##### DeleteTerm
+
+This function will delete a Term from Terms.
+
+``` go
+func DeleteTerm(termName string)
+```
+
+##### DeleteValue
+
+This function will delete a language / value from a Term
+
+``` go
+func DeleteValue(termName, language string)
+```
+
+##### GetValue
+
+This function will get the value of a language from a Term, if it exists
+
+``` go
+func GetValue(termName, language string) string
+```
+
+##### SetTerm
+
+This function will enable you to set a Term to Terms.
+
+``` go
+func SetTerm(termName string)
+```
+
+##### SetValue
+
+This function will enable you to set the value of a Term language.
+
+``` go
+func SetValue(termName, language, value string)
 ```
