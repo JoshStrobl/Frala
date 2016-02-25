@@ -6,11 +6,11 @@ import (
 )
 
 func main() {
-	parsedContent, parseError := frala.Parse("page.html") // Parse page.html
+	parsedResponse := frala.Parse("page.html") // Parse page.html
 
-	if parseError == nil { // If there was no parse error, because we're awesome
-		fmt.Println(parsedContent) // Output parsedContent
+	if parsedResponse.Error == nil { // If there was no parse error, because we're awesome
+		fmt.Println(parsedResponse.Content) // Output parsedContent
 	} else { // If we failed to parse
-		fmt.Println("You fool, you doomed us all! Okay, not really, but here is the error message: ", parseError)
+		fmt.Println("You fool, you doomed us all! Okay, not really, but here is the error message: ", parsedResponse.Error)
 	}
 }

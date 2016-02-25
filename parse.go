@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
@@ -85,8 +86,8 @@ func ParseSyntax(fralaSyntax string) string {
 	// #region Convert Frala syntax to JSON
 
 	fralaSyntaxJSON := fralaSyntax                                          // Initially set fralaSyntaxJSON to fralaSyntax
-	searchStrings := []string{" ", "=", "lang", "src", "type"}              // Array of things we need to search for
-	replaceStrings := []string{",", ":", "\"lang\"", "\"src\"", "\"type\""} // Array of things we'll replace
+	searchStrings := []string{"\" ", "=", "lang", "src", "type"}              // Array of things we need to search for
+	replaceStrings := []string{"\",", ":", "\"lang\"", "\"src\"", "\"type\""} // Array of things we'll replace
 
 	for pos, searchString := range searchStrings { // For each searchString in searchStrings
 		fralaSyntaxJSON = strings.Replace(fralaSyntaxJSON, searchString, replaceStrings[pos], -1) // Replace the searchString with the cooresponding replaceString
@@ -99,11 +100,13 @@ func ParseSyntax(fralaSyntax string) string {
 	if decodeErr == nil { // If there was no decode error
 		if (fralaContext.Type == "fragment") && (fralaContext.Source != "") { // If this is a Fragment
 			if fralaContext.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
-				restoreFileName := CurrentParsingFile                // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+				restoreFileName := CurrentParsingFile // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+				fralaContext.Source = filepath.Clean(filepath.Dir(CurrentParsingFile) + "/" + fralaContext.Source) // Ensure we have prepend the directory of the current parsing file
+
 				fragmentParserResponse := Parse(fralaContext.Source) // Attempt to read the fragment
 				CurrentParsingFile = restoreFileName                 // Restore file name back to original state
 
-				if fragmentParserResponse.Error != nil { // If there was an error reading the fragment file
+				if fragmentParserResponse.Error == nil { // If there was no error reading the fragment file
 					parsedString = fragmentParserResponse.Content // Set parsedString to fragment ParserResponse Content
 				} else { // If the fragment file does not exist
 					parsedString = fralaContext.Source + " does not exist."
