@@ -34,13 +34,7 @@ func Parse(file string) ParseResponse {
 		fileSplitLines := strings.Split(fileContent, "\n") // Split by new line
 
 		for _, line := range fileSplitLines { // For each line
-			parsedLineContent := line // Default parsedLineContent to existing line content
-
-			if strings.Contains(line, "{") { // If the string contains Frala syntax
-				parsedLineContent = ParseLine(line) // Parse the line content
-			}
-
-			parsedString += parsedLineContent + "\n"
+			parsedString += ParseLine(line) + "\n"
 		}
 
 		parserResponse.Content = parsedString
@@ -53,17 +47,17 @@ func Parse(file string) ParseResponse {
 
 // ParseLine parses an individual line
 func ParseLine(lineContent string) string {
-	parsedLineContent := lineContent        // Default parsedLineContent as the lineContent
-	if strings.Contains(lineContent, "{") { // If the string contains Frala syntax
+	parsedLineContent := lineContent                                                // Default parsedLineContent as the lineContent
+	if strings.Contains(lineContent, "{{") && strings.Contains(lineContent, "}}") { // If this has Frala syntax in it (has both { and })
 		var newLineContent string // Define newLineContent as the new line content we will return
 
-		multiSyntaxSplit := strings.Split(lineContent, "{") // Split the lineContent into segments based on {
+		multiSyntaxSplit := strings.Split(lineContent, "{{") // Split the lineContent into segments based on {
 
 		for _, lineSegment := range multiSyntaxSplit { // For each segment of the line
-			if strings.Contains(lineSegment, "}") { // If this segment of the line contains }
-				syntaxEndSplit := strings.Split(lineSegment, "}")                             // Split the segment based on the ending of the Frala syntax
-				parsedSyntax := ParseSyntax("{" + strings.TrimSpace(syntaxEndSplit[0]) + "}") // Parse the syntax and return it
-				contentAfterFralaSyntax := syntaxEndSplit[1]                                  // Set Frala
+			if strings.Contains(lineSegment, "}}") { // If this segment of the line contains }
+				syntaxEndSplit := strings.Split(lineSegment, "}}")                              // Split the segment based on the ending of the Frala syntax
+				parsedSyntax := ParseSyntax("{{" + strings.TrimSpace(syntaxEndSplit[0]) + "}}") // Parse the syntax and return it
+				contentAfterFralaSyntax := syntaxEndSplit[1]                                    // Set Frala
 
 				newLineContent += parsedSyntax + contentAfterFralaSyntax
 			} else { // If this segment does not contain an end-syntax, meaning it is likely a segment prior to the syntax
@@ -85,9 +79,9 @@ func ParseSyntax(fralaSyntax string) string {
 
 	// #region Convert Frala syntax to JSON
 
-	fralaSyntaxJSON := fralaSyntax                                          // Initially set fralaSyntaxJSON to fralaSyntax
-	searchStrings := []string{"\" ", "=", "lang", "src", "type"}              // Array of things we need to search for
-	replaceStrings := []string{"\",", ":", "\"lang\"", "\"src\"", "\"type\""} // Array of things we'll replace
+	fralaSyntaxJSON := fralaSyntax                                                      // Initially set fralaSyntaxJSON to fralaSyntax
+	searchStrings := []string{"{{", "}}", "\" ", "=", "lang", "src", "type"}            // Array of things we need to search for
+	replaceStrings := []string{"{", "}", "\",", ":", "\"lang\"", "\"src\"", "\"type\""} // Array of things we'll replace
 
 	for pos, searchString := range searchStrings { // For each searchString in searchStrings
 		fralaSyntaxJSON = strings.Replace(fralaSyntaxJSON, searchString, replaceStrings[pos], -1) // Replace the searchString with the cooresponding replaceString
@@ -100,7 +94,7 @@ func ParseSyntax(fralaSyntax string) string {
 	if decodeErr == nil { // If there was no decode error
 		if (fralaContext.Type == "fragment") && (fralaContext.Source != "") { // If this is a Fragment
 			if fralaContext.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
-				restoreFileName := CurrentParsingFile // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+				restoreFileName := CurrentParsingFile                                                              // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
 				fralaContext.Source = filepath.Clean(filepath.Dir(CurrentParsingFile) + "/" + fralaContext.Source) // Ensure we have prepend the directory of the current parsing file
 
 				fragmentParserResponse := Parse(fralaContext.Source) // Attempt to read the fragment
