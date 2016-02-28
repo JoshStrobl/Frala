@@ -23,8 +23,7 @@ func ConvertFromPo(fileName string) error {
 
 // ConvertToPo converts Frala Terms into msgid / msgstr context for usage in a .po file
 func ConvertToPo(language string) string {
-	var poFile *po.File
-
+	var poFile po.File
 	poFile.MimeHeader.Language = language // Language in MimeHeader as language provided
 
 	for termName := range Config.Terms { // For each termName and term in Terms
