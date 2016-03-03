@@ -33,7 +33,7 @@ func SaveConfig() error {
 	var configContent []byte
 	var saveError error
 
-	configContent, saveError = json.Marshal(Config) // Encode the Config into configContent. If encoding fails, set saveError
+	configContent, saveError = json.MarshalIndent(Config, "", "\t") // Encode the Config into configContent, ensure it maintains pretty formatting. If encoding fails, set saveError
 
 	if saveError == nil { // If there was no error encoding
 		saveError = ioutil.WriteFile("frala.json", configContent, 0755) // Attempt to write the configContent to frala.json

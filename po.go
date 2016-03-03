@@ -4,6 +4,8 @@ package frala
 
 import (
 	"github.com/robfig/gettext-go/gettext/po" // Support for reading / writing GNU PO files
+	"sort"
+	"strings"
 )
 
 // ConvertFromPo reads a .po file and convert its content to Frala Terms, automatically adding them to the config
@@ -15,6 +17,11 @@ func ConvertFromPo(fileName string) error {
 	if conversionError == nil { // If there was no issue loading the po file
 		for _, message := range poFile.Messages { // For each po.Message struc in poFile.Messages
 			SetValue(message.MsgId, poFile.MimeHeader.Language, message.MsgStr) // Set the msg ID / val as term / value for the language of the file
+
+			if !strings.Contains(strings.Join(Config.Languages, ",")+",", poFile.MimeHeader.Language+",") { // If the Languages array doesn't contain this Po file lang
+				Config.Languages = append(Config.Languages, poFile.MimeHeader.Language) // Append the language of the Po file to the Languages
+				sort.Strings(Config.Languages)                                          // Sort the Languages
+			}
 		}
 	}
 

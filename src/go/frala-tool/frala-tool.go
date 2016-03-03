@@ -12,6 +12,9 @@ import (
 	"strings"
 )
 
+// OriginalLanguage is the original value of frala
+var OriginalLanguage string
+
 // TargetDirectory is the directory we should save parsed files or Po content to
 var TargetDirectory string
 
@@ -65,7 +68,9 @@ func init() {
 func main() {
 	nflag.Parse() // Parse nflag
 
+	OriginalLanguage = frala.Config.DefaultLanguage             // Set OriginalLanguage before doing any parsing or conversion
 	frala.Config.DefaultLanguage, _ = nflag.GetAsString("lang") // Change DefaultLanguage to whatever may be set as lang. This may not change if no value is passed to lang
+
 	parseFiles, parseFilesErr := nflag.GetAsString("parse")
 	poFile, poFileErr := nflag.GetAsString("po")
 
@@ -119,7 +124,8 @@ func PoConversion(convertTerms bool, poFile string) {
 			conversionError := frala.ConvertFromPo(poFile) // Convert the poFile to Frala Terms
 
 			if conversionError == nil { // If there was no conversion error
-				frala.SaveConfig() // Save the config
+				frala.Config.DefaultLanguage = OriginalLanguage // Ensure the default language is maintained after importing from Po
+				frala.SaveConfig()                              // Save the config
 			} else { // If there was a conversion error
 				fmt.Println(conversionError)
 			}
