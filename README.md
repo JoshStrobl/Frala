@@ -2,25 +2,34 @@
 
 ## About
 
-Frala is fragment and translation engine. Frala enables you to separate out files into "fragments" and import / re-use them elsewhere. Frala also enables your content to be multi-lingual through the use of "terms". With terms, you can specify the term name, languages and the language's value for the word.
+Frala is fragment and translation engine.
+
+**Features:**
+
+- Frala enables you to separate out files into "fragments" and import / re-use them elsewhere.
+- Frala enables your content to be multi-lingual through the use of "Terms". With Terms, you can specify the term name, languages and the language's value for the word.
+- Frala interfaces with the standarized gettext PO files for translations, enabling you to convert to and from PO files / Frala Terms.
+
+**Current Version:** `0.3`
 
 **License:** `Apache 2.0`
 
-TODO:
+**TODO:**
 
-- [ ] Implement Term JSON to .po and .po to Term JSON converters.
+- [ ] Implement CLI tool that leverages the core Frala package to enable usage of functionality without needing to implement the package
+ - *though really, you should -- totally no bias /s*.
 
 ### Syntax
 
-Frala does all this by using a syntax similar to JSON and Mustache, in that it leverages `{` and `}`.
+Frala does all this by using a syntax similar to JSON and Mustache, in that it leverages `{{` and `}}`.
 
 **Example Fragment:** In the example below, we are importing a Fragment. Note that we are using an HTML file in this example, but any file type works.
 
-`{ type="fragment" src="file.html" }`
+`{{ type="fragment" src="file.html" }}`
 
 **Example Term:** In the example below, we are importing a Term. In our config, we have a term specified for "hello" in the Finnish `fi` language.
 
-`{ type="term" lang="fi" src="hello" }`
+`{{ type="term" lang="fi" src="hello" }}`
 
 ### Config
 
@@ -38,6 +47,7 @@ Note: We will default to using `en` if not default language is specified in the 
 ``` json
 {
     "DefaultLanguage" : "en",
+    "Languages" : ["en", "fi"],
     "Terms" : {
         "good_morning" : {
             "en" : "good morning",
@@ -52,7 +62,45 @@ Note: We will default to using `en` if not default language is specified in the 
 This project leverages CodeUtils for development and adopts the CodeUtils Usage Spec. To learn how to contribute to this project and set up CodeUtils, read
 [here](https://github.com/StroblIndustries/CodeUtils/blob/master/CodeUtils-Usage-Spec.md).
 
-## Usage
+## Usage: HTML
+
+### Fragments
+
+You can declare the importing of a Fragment by using the Frala Fragment syntax anywhere in an HTML file, including other Fragments. If you specify only the file, without a path, it will look in the directory of the same file that the Fragment it is.
+
+#### Examples
+
+In the example below, we are importing `info.html` from the current directory and `innerfragment.html` from `innerdir`.
+
+``` html
+<div>
+    {{type="fragment" src="info.html"}}
+    {{type="fragment" src="innerdir/innerfragment.html"}}
+</div>
+```
+
+In `innerfragment.html`, the content imports `innerdirref.html`. Because of our use of relative URLs, we are actually importing the file from the same directory as `innerfragment.html`
+
+``` html
+{{ type="fragment" src="innerdirref.html" }}
+```
+
+### Terms
+
+You can declare the use of a Term by using the Frala Term Syntax anywhere in an HTML file, including Fragments. Terms can be specified without a language, meaning it will use the `DefaultLanguage` from the Config, or if specified with a language, it will attempt to use the value from that Term's language key / val.
+
+#### Examples
+
+In the example below, we are importing the "hello" Term with English (default language) and Finnish.
+
+``` html
+<div>
+    This is our message in English: {{type="term" src="hello" }}, Josh!
+    This is our message in Finnish: {{type="term" src="hello" lang="fi"}}, Josh!
+</div>
+```
+
+## Usage: Go Package
 
 ### Import
 
@@ -77,9 +125,9 @@ type Context struct {
 This is the configuration for Frala.
 
 ``` go
-type FralaConfig struct {
+type ConfigOptions struct {
 	DefaultLanguage string          // Default Language string, if not declared, default to en
-	Languages       []string        // Languages is a list of languages (string)
+	Languages       []string        // Languages is a list of languages (string) -- Optional
 	Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
 }
 ```
@@ -94,9 +142,10 @@ type ParseResponse struct {
     Error   error  // Error that occurred during parsing
 }
 ```
+
 #### Term
 
-Term is a map[string]string, as each Term has a map of language -> value (where language is a string and value is a string)
+Term is a `map[string]string`, as each Term has a map of language -> value (where language is a string and value is a string)
 
 ``` go
 type Term map[string]string
@@ -105,8 +154,12 @@ type Term map[string]string
 ### Variables
 
 ``` go
+// Config is the configuration of FralaConfig
+var Config ConfigOptions
+
 // Define CurrentParsingFile as the file we're currently parsing
 var CurrentParsingFile string
+
 // Define InitError as any potential error from initializing Frala
 var InitError error
 ```
@@ -165,7 +218,28 @@ This function will parse a Frala syntax string and return the appropriate (if an
 func ParseSyntax(fralaSyntax string) string
 ```
 
+#### Po Conversion
+
+##### ConvertFromPo
+
+ConvertFromPo reads a .po file and convert its content to Frala Terms, automatically adding them to the config.
+
+``` go
+func ConvertFromPo(fileName string) error
+```
+
+##### ConvertToPo
+
+ConvertToPo converts Frala Terms into msgid / msgstr context for usage
+in a .po file. It returns the po file content.
+
+``` go
+func ConvertToPo(language string) string
+```
+
 #### Terms
+
+Really these are all helper functions. They aren't necessary to use, but handy if desired.
 
 ##### DeleteTerm
 
