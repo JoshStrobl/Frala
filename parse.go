@@ -15,7 +15,9 @@ func MultiParse(files []string) map[string]ParseResponse {
 	parserResponses := make(map[string]ParseResponse)
 
 	for _, file := range files { // For each file
-		parserResponses[file] = Parse(file) // Define this file in parserResponses to ParserResponse provided by Parse
+		if strings.HasSuffix(file, ".html") { // If this is an HTML file
+			parserResponses[file] = Parse(file) // Define this file in parserResponses to ParserResponse provided by Parse
+		}
 	}
 
 	return parserResponses
