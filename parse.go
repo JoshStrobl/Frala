@@ -111,7 +111,15 @@ func ParseSyntax(fralaSyntax string) string {
 				parsedString = "I can't do that Dave. (Importing Fragment within itself)"
 			}
 		} else if (fralaContext.Type == "term") && (fralaContext.Source != "") { // If this is a term
-			parsedString = GetValue(fralaContext.Source, fralaContext.Lang) // Get the Language value of this Source in Terms
+			if strings.HasPrefix(fralaContext.Source, "frala.") { // If we are actually fetching an option from Frala
+				if fralaContext.Source == "frala.DefaultLanguage" { // If we should return the default language
+					parsedString = Config.DefaultLanguage
+				} else { // No other options are available currently
+					parsedString = "No other Frala options are accessible currently."
+				}
+			} else { // If this is a "normal" term
+				parsedString = GetValue(fralaContext.Source, fralaContext.Lang) // Get the Language value of this Source in Terms
+			}
 		} else { // If the necessary syntax elements were not provided
 			parsedString = "Necessary Frala Syntax elements were not provided for this context."
 		}
