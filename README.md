@@ -9,15 +9,15 @@ Frala is fragment and translation engine.
 - Frala enables you to separate out files into "fragments" and import / re-use them elsewhere.
 - Frala enables your content to be multi-lingual through the use of "Terms". With Terms, you can specify the term name, languages and the language's value for the word.
 - Frala interfaces with the standarized gettext PO files for translations, enabling you to convert to and from PO files / Frala Terms.
+- Frala provides an optional CLI tool that leverages the package, to provide CLI-based Po conversion and parsing.
 
-**Current Version:** `0.3`
+**Current Version:** `0.4`
 
 **License:** `Apache 2.0`
 
 **TODO:**
 
-- [ ] Implement CLI tool that leverages the core Frala package to enable usage of functionality without needing to implement the package
- - *though really, you should -- totally no bias /s*.
+- [ ] Add more built-in Terms
 
 ### Syntax
 
@@ -62,6 +62,52 @@ Note: We will default to using `en` if not default language is specified in the 
 This project leverages CodeUtils for development and adopts the CodeUtils Usage Spec. To learn how to contribute to this project and set up CodeUtils, read
 [here](https://github.com/StroblIndustries/CodeUtils/blob/master/CodeUtils-Usage-Spec.md).
 
+## Usage: CLI Tool
+
+We provide a command-line tool built upon the Frala package, called `frala-tool`. This tool is tested and supported under Linux, though interested parties are welcome to test and provide fixes for support on other operating systems.
+
+This command-line tool enables you to do gettext Po to Frala Term syntax (with automatic saving to the config), Frala Term syntax to gettext Po file, and file parsing.
+
+We provide this tool in a separate tarball available on the [Releases page](https://github.com/JoshStrobl/Frala/releases).
+
+### File Parsing
+
+You can parse one or multiple files by providing:
+
+- A comma-separated list of files to parse
+- Optionally a language to parse as. By default, it'll be the DefaultLanguage defined in your frala.json config (*or en if none set*).
+- Optionally a target directory (*otherwise outputted to current working directory*).
+
+``` bash
+./frala-tool --lang=ar --parse=src1.html,src2.html,src3.html --target-dir=./test-directory/
+```
+
+### Po Conversion
+
+#### Frala Term to Po File
+
+You can convert Frala Terms to a gettext Po file. This is useful for conversion to Po for use on services like Transifex. You can do so by providing:
+
+- The name of the po file you wish to save as.
+- Optionally a language of the Terms. By default, it'll be the DefaultLanguage defined in your frala.json config (*or en if none set*).
+- Optionally a target directory (*otherwise outputted to current working directory*).
+
+``` bash
+./frala-tool --lang=ar --po=ar.po --target-dir=./po/
+```
+
+#### Po File to Frala Terms
+
+You can convert a Po file to Frala Terms, which gets automatically saved to the config. This is useful for converting gettext Po files from services like Transifex to Frala. You can do so by providing:
+
+- The name of the po file you wish to use.
+
+We will automatically detect the language declared in the Po file.
+
+``` bash
+./frala-tool --po=ar.po
+```
+
 ## Usage: HTML
 
 ### Fragments
@@ -97,6 +143,14 @@ In the example below, we are importing the "hello" Term with English (default la
 <div>
     This is our message in English: {{type="term" src="hello" }}, Josh!
     This is our message in Finnish: {{type="term" src="hello" lang="fi"}}, Josh!
+</div>
+```
+
+You can also use Frala "Built-in" Terms. Currently, the available built-in term is `frala.DefaultLanguage`, which enables you to fetch the DefaultLanguage from frala for use in your syntax.
+
+``` html
+<div>
+    What language are we using? {{ type="term" src="frala.DefaultLanguage" }}
 </div>
 ```
 
@@ -222,7 +276,7 @@ func ParseSyntax(fralaSyntax string) string
 
 ##### ConvertFromPo
 
-ConvertFromPo reads a .po file and convert its content to Frala Terms, automatically adding them to the config.
+ConvertFromPo reads a .po file and convert its content to Frala Terms, automatically adding them to the config. We will also automatically add the language of the Po file to the Languages `[]string` in the Frala Config.
 
 ``` go
 func ConvertFromPo(fileName string) error
