@@ -17,6 +17,12 @@ func main() {
 		fmt.Println("You fool, you doomed us all! Okay, not really, but here is the error message: ", parsedResponse.Error)
 	}
 
+	fmt.Println("Testing GetDirection for lang: en")
+	fmt.Println(frala.GetDirection("en"))
+
+	fmt.Println("Testing GetDirection for lang: ar")
+	fmt.Println(frala.GetDirection("ar"))
+
 	fmt.Println("\nTesting Po functionality")
 
 	fmt.Println("Running ConvertToPo for lang: en")

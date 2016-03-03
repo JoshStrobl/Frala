@@ -114,6 +114,8 @@ func ParseSyntax(fralaSyntax string) string {
 			if strings.HasPrefix(fralaContext.Source, "frala.") { // If we are actually fetching an option from Frala
 				if fralaContext.Source == "frala.DefaultLanguage" { // If we should return the default language
 					parsedString = Config.DefaultLanguage
+				} else if fralaContext.Source == "frala.Direction" { // If we should return the likely language direction (LTR or RTL)
+					parsedString = Config.Direction
 				} else { // No other options are available currently
 					parsedString = "No other Frala options are accessible currently."
 				}

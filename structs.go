@@ -5,6 +5,7 @@ package frala
 // ConfigOptions is the configuration for Frala
 type ConfigOptions struct {
 	DefaultLanguage string          // Default Language string, if not declared, default to en
+	Direction       string          // Direction string, informs what the likely direction of the DefaultLanguage is
 	Languages       []string        // Languages is a list of languages (string)
 	Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
 }

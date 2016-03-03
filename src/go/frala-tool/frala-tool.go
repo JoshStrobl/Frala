@@ -68,8 +68,9 @@ func init() {
 func main() {
 	nflag.Parse() // Parse nflag
 
-	OriginalLanguage = frala.Config.DefaultLanguage             // Set OriginalLanguage before doing any parsing or conversion
-	frala.Config.DefaultLanguage, _ = nflag.GetAsString("lang") // Change DefaultLanguage to whatever may be set as lang. This may not change if no value is passed to lang
+	OriginalLanguage = frala.Config.DefaultLanguage                     // Set OriginalLanguage before doing any parsing or conversion
+	frala.Config.DefaultLanguage, _ = nflag.GetAsString("lang")         // Change DefaultLanguage to whatever may be set as lang. This may not change if no value is passed to lang
+	frala.Config.Direction = frala.GetDirection(frala.Config.Direction) // Ensure we have an accurate Direction
 
 	parseFiles, parseFilesErr := nflag.GetAsString("parse")
 	poFile, poFileErr := nflag.GetAsString("po")
