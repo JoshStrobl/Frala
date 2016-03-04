@@ -6,6 +6,8 @@ package frala
 func GetValue(termName, language string) string {
 	if language == "" { // If no language is defined
 		language = Config.DefaultLanguage // Set to Default Language
+	} else { // If the language is not empty
+		language = Sanitize(language) // Ensure it is sanitized
 	}
 
 	SetTerm(termName)                                 // Automatically set the term if it doesn't exist already
@@ -31,6 +33,7 @@ func SetTerm(termName string) {
 func SetValue(termName, language, value string) {
 	SetTerm(termName)                 // Automatically set the term if it doesn't exist already
 	term, _ := Config.Terms[termName] // Get the term if it exists
+	language = Sanitize(language)     // Ensure the language is sanitized
 
 	term[language] = value        // Set the value of a particular language to this term
 	Config.Terms[termName] = term // Update the Terms

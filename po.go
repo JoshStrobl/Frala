@@ -16,11 +16,12 @@ func ConvertFromPo(fileName string) error {
 
 	if conversionError == nil { // If there was no issue loading the po file
 		for _, message := range poFile.Messages { // For each po.Message struc in poFile.Messages
-			SetValue(message.MsgId, poFile.MimeHeader.Language, message.MsgStr) // Set the msg ID / val as term / value for the language of the file
+			poLanguage := Sanitize(poFile.MimeHeader.Language)  // Ensure the Po file's MimeHeader Language is sanitized
+			SetValue(message.MsgId, poLanguage, message.MsgStr) // Set the msg ID / val as term / value for the language of the file
 
-			if !strings.Contains(strings.Join(Config.Languages, ",")+",", poFile.MimeHeader.Language+",") { // If the Languages array doesn't contain this Po file lang
-				Config.Languages = append(Config.Languages, poFile.MimeHeader.Language) // Append the language of the Po file to the Languages
-				sort.Strings(Config.Languages)                                          // Sort the Languages
+			if !strings.Contains(strings.Join(Config.Languages, ",")+",", poLanguage+",") { // If the Languages array doesn't contain this Po file lang
+				Config.Languages = append(Config.Languages, poLanguage) // Append the language of the Po file to the Languages
+				sort.Strings(Config.Languages)                          // Sort the Languages
 			}
 		}
 	}

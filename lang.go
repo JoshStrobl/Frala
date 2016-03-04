@@ -14,6 +14,7 @@ func GetDirection(language string) string {
 		"iw", // Hebrew
 	}
 
+	language = Sanitize(language)              // Sanitize the language
 	language = strings.ToLower(language)       // Lowercase the language
 	language = strings.Split(language, "_")[0] // If there is a special format, like en_GB, ensure we only get first part
 
@@ -22,4 +23,16 @@ func GetDirection(language string) string {
 	}
 
 	return direction
+}
+
+// Sanitize will ensure that language symbols are sanitized correctly
+func Sanitize(language string) string {
+	filterList := []string{"@"}   // Create a filter list of characters that need to be filtered / replaced
+	sanitizeList := []string{"-"} // Create a sanitize list of characters that coorespond with filterList
+
+	for index, filterChar := range filterList {
+		language = strings.Replace(language, filterChar, sanitizeList[index], -1) // Set language to replace the filterChar with the cooresponding char in sanitizeList
+	}
+
+	return language
 }

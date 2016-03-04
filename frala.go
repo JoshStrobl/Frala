@@ -18,5 +18,6 @@ func init() {
 		Config.DefaultLanguage = "en" // Default language to English
 	}
 
-	Config.Direction = GetDirection(Config.DefaultLanguage) // Get the likely direction of the DefaultLanguage
+	Config.DefaultLanguage = Sanitize(Config.DefaultLanguage) // Sanitize the language
+	Config.Direction = GetDirection(Config.DefaultLanguage)   // Get the likely direction of the DefaultLanguage
 }
