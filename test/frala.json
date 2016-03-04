@@ -1,4 +1,5 @@
 {
+    "Languages" : ["en", "fi"],
     "Terms" : {
         "hello" : {
             "en" : "hello",
