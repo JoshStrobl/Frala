@@ -146,12 +146,32 @@ In the example below, we are importing the "hello" Term with English (default la
 </div>
 ```
 
-You can also use Frala "Built-in" Terms. Currently, the available built-in term is `frala.DefaultLanguage`, which enables you to fetch the DefaultLanguage from frala for use in your syntax.
+You can also use Frala "Built-in" Terms. These "built-in" Terms (always starting with `frala.`) expose certain attributes relating to Frala, discussed below:
+
+**Direction:**
+
+`frala.Direction` returns the likely direction (LTR or RTL) of the `DefaultLanguage`.
+
+``` html
+{{ type="term" src="frala.Direction" }}
+```
+
+**Default Language:**
+
+`frala.DefaultLanguage` enables you to fetch the DefaultLanguage from frala for use in your syntax.
 
 ``` html
 <div>
     What language are we using? {{ type="term" src="frala.DefaultLanguage" }}
 </div>
+```
+
+**Languages:**
+
+`frala.Languages` provides a joined (comma-separated) string of Languages defined in the Config or `DefaultLanguage` if no Languages are defined.
+
+``` html
+{{ type="term" src="frala.Languages" }}
 ```
 
 ## Usage: Go Package
@@ -180,9 +200,10 @@ This is the configuration for Frala.
 
 ``` go
 type ConfigOptions struct {
-	DefaultLanguage string          // Default Language string, if not declared, default to en
-	Languages       []string        // Languages is a list of languages (string) -- Optional
-	Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
+    DefaultLanguage string          // Default Language string, if not declared, default to en
+    Direction       string          // Direction string, informs what the likely direction of the DefaultLanguage is
+    Languages       []string        // Languages is a list of languages (string)
+    Terms           map[string]Term // Terms is a map of strings (term names) to individual Terms
 }
 ```
 
@@ -236,6 +257,16 @@ This function will save the Config to frala.json.
 
 ``` go
 func SaveConfig() error
+```
+
+#### Language
+
+##### GetDirection
+
+GetDirection gets the likely direction of the language provided.
+
+``` go
+func GetDirection(language string) string
 ```
 
 #### Parsing
