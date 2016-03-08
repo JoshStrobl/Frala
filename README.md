@@ -11,7 +11,7 @@ Frala is fragment and translation engine.
 - Frala interfaces with the standarized gettext PO files for translations, enabling you to convert to and from PO files / Frala Terms.
 - Frala provides an optional CLI tool that leverages the package, to provide CLI-based Po conversion and parsing.
 
-**Current Version:** `0.4`
+**Current Version:** `0.4.1`
 
 **License:** `Apache 2.0`
 
