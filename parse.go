@@ -138,6 +138,10 @@ func ParseSyntax(fralaSyntax string) string {
 				}
 			} else { // If this is a "normal" term
 				parsedString = GetValue(fralaContext.Source, fralaContext.Lang) // Get the Language value of this Source in Terms
+
+				if strings.Contains(parsedString, "is not translated") { // If the string is not translated
+					parsedString = fralaSyntax; // Change back to using fralaSyntax
+				}
 			}
 		}
 	}
