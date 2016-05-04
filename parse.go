@@ -41,7 +41,7 @@ func Parse(file string) ParseResponse {
 
 		parserResponse.Content = parsedString
 	} else {
-		parserResponse.Error = errors.New("File does not exist.")
+		parserResponse.Error = errors.New(file + " does not exist.")
 	}
 
 	return parserResponse
@@ -94,7 +94,13 @@ func ParseSyntax(fralaSyntax string) string {
 	decodeErr := json.Unmarshal([]byte(fralaSyntaxJSON), &fralaContext) // Decode fralaSyntaxJSON into fralaContext
 
 	if decodeErr == nil { // If there was no decode error
-		if (fralaContext.Type == "fragment") && (fralaContext.Source != "") { // If this is a Fragment
+		if (fralaContext.Type == "") { // If no type was defined
+			return "No type provided for this Frala context."
+		} else if (fralaContext.Source == "") { // If no source was provided
+			return "No source provided for this Frala context."
+		}
+
+		if (fralaContext.Type == "fragment") { // If this is a Fragment
 			if fralaContext.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
 				restoreFileName := CurrentParsingFile                                                              // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
 				fralaContext.Source = filepath.Clean(filepath.Dir(CurrentParsingFile) + "/" + fralaContext.Source) // Ensure we have prepend the directory of the current parsing file
@@ -105,31 +111,34 @@ func ParseSyntax(fralaSyntax string) string {
 				if fragmentParserResponse.Error == nil { // If there was no error reading the fragment file
 					parsedString = fragmentParserResponse.Content // Set parsedString to fragment ParserResponse Content
 				} else { // If the fragment file does not exist
-					parsedString = fralaContext.Source + " does not exist."
+					parsedString = fragmentParserResponse.Error.Error() // Get the parser response error
 				}
 			} else { // If we're attempting Fragment inception
 				parsedString = "I can't do that Dave. (Importing Fragment within itself)"
 			}
-		} else if (fralaContext.Type == "term") && (fralaContext.Source != "") { // If this is a term
+		} else if (fralaContext.Type == "term")  { // If this is a term
 			if strings.HasPrefix(fralaContext.Source, "frala.") { // If we are actually fetching an option from Frala
-				if fralaContext.Source == "frala.DefaultLanguage" { // If we should return the default language
-					parsedString = Config.DefaultLanguage
-				} else if fralaContext.Source == "frala.Direction" { // If we should return the likely language direction (LTR or RTL)
-					parsedString = Config.Direction
-				} else if fralaContext.Source == "frala.Languages" { // If we should return a list of Languages
-					if len(Config.Languages) != 0 { // If there was languages defined in the Config
-						parsedString = strings.Join(Config.Languages, ",")
-					} else { // If there are no languages defined in the Config.Languages
-						parsedString = Config.DefaultLanguage // Return the DefaultLanguage instead
-					}
-				} else { // No other options are available currently
-					parsedString = "No other Frala options are accessible currently."
+				switch (fralaContext.Source) {
+					case "frala.DefaultLanguage":
+						parsedString = Config.DefaultLanguage
+						break;
+					case "frala.Direction":
+						parsedString = Config.Direction
+						break;
+					case "frala.Languages":
+						if len(Config.Languages) != 0 { // If there was languages defined in the Config
+							parsedString = strings.Join(Config.Languages, ",")
+						} else { // If there are no languages defined in the Config.Languages
+							parsedString = Config.DefaultLanguage // Return the DefaultLanguage instead
+						}
+						break;
+					default:
+						parsedString = fralaContext.Source + " is not a valid Frala Built-in term."
+						break;
 				}
 			} else { // If this is a "normal" term
 				parsedString = GetValue(fralaContext.Source, fralaContext.Lang) // Get the Language value of this Source in Terms
 			}
-		} else { // If the necessary syntax elements were not provided
-			parsedString = "Necessary Frala Syntax elements were not provided for this context."
 		}
 	}
 

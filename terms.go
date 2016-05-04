@@ -4,9 +4,9 @@ package frala
 
 // GetValue gets the value of a language from a Term, if it exists
 func GetValue(termName, language string) string {
-	if language == "" { // If no language is defined
-		language = Config.DefaultLanguage // Set to Default Language
-	} else { // If the language is not empty
+	language = Config.DefaultLanguage // Set to Default Language
+
+	if language != "" { // If a language is defined
 		language = Sanitize(language) // Ensure it is sanitized
 	}
 

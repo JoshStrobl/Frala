@@ -19,7 +19,7 @@ func ReadConfig() error {
 		readError = json.Unmarshal(configContent, &Config) // Decode configContent into Config
 
 		if readError != nil {
-			readError = errors.New("Unable to decode frala.json into the appropriate Frala configuration structure. Please verify the correctness of your config.")
+			readError = errors.New("Unable to decode frala.json: " + readError.Error())
 		}
 	} else { // If there was a read error
 		readError = errors.New("frala.json file does not exist")
@@ -39,10 +39,10 @@ func SaveConfig() error {
 		saveError = ioutil.WriteFile("frala.json", configContent, 0755) // Attempt to write the configContent to frala.json
 
 		if saveError != nil {
-			saveError = errors.New("Failed to save the Config to frala.json.")
+			saveError = errors.New("Failed to save the Config to frala.json: " + saveError.Error())
 		}
 	} else { // If we failed to encode the Config to JSON
-		saveError = errors.New("Failed to encode the Config to JSON.")
+		saveError = errors.New("Failed to encode the Config to JSON: " + saveError.Error())
 	}
 
 	return saveError
