@@ -11,22 +11,17 @@ import (
 
 // ReadConfig reads any frala.json file and update the Config
 func ReadConfig() error {
-	var configContent []byte
-	var readError error
+	if configContent, readErr := ioutil.ReadFile("frala.json"); readErr == nil { // Read the frala.json configuration, set any err to readErr
+		decodeErr := json.Unmarshal(configContent, &Config)
 
-	configContent, readError = ioutil.ReadFile("frala.json") // Read the frala.json configuration
-
-	if readError == nil { // If there was no read error
-		readError = json.Unmarshal(configContent, &Config) // Decode configContent into Config
-
-		if readError != nil {
-			readError = errors.New("Unable to decode frala.json: " + readError.Error())
+		if decodeErr != nil { // Decode configContent into Config
+			decodeErr = errors.New("Unable to decode frala.json: " + decodeErr.Error())
 		}
-	} else { // If there was a read error
-		readError = errors.New("frala.json file does not exist")
-	}
 
-	return readError
+		return decodeErr
+	} else { // If there was a read error
+		return errors.New("Failed to read frala.json: " + readErr.Error())
+	}
 }
 
 // SaveConfig saves the Config to frala.json
