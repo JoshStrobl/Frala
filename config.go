@@ -31,16 +31,9 @@ func ReadConfig() error {
 
 // SaveConfig saves the Config to frala.json
 func SaveConfig() error {
-	var configContent []byte
-	var saveError error
-
-	configContent, saveError = json.MarshalIndent(Config, "", "\t") // Encode the Config into configContent, ensure it maintains pretty formatting. If encoding fails, set saveError
-
-	if saveError == nil { // If there was no error encoding
-		saveError = coreutils.WriteOrUpdateFile("frala.json", configContent, coreutils.NonGlobalFileMode) // Attempt to write the configContent to frala.json
+	if configContent, encodeErr := json.MarshalIndent(Config, "", "\t"); encodeErr == nil { // Encode the Config into configContent, ensure it maintains pretty formatting.
+		return coreutils.WriteOrUpdateFile("frala.json", configContent, coreutils.NonGlobalFileMode) // Attempt to write the configContent to frala.json
 	} else { // If we failed to encode the Config to JSON
-		saveError = errors.New("Failed to encode the Config to JSON: " + saveError.Error())
+		return errors.New("Failed to encode the Config to JSON: " + encodeErr.Error())
 	}
-
-	return saveError
 }

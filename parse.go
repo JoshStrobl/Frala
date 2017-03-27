@@ -53,7 +53,7 @@ func Parse(file string) ParseResponse {
 
 	content := string(contentBytes[:])
 	lines := strings.Split(content, "\n") // Split the string up into lines
-	newLines := []string{} // Create a newLines slice that'll contain our content
+	newLines := []string{}                // Create a newLines slice that'll contain our content
 
 	for _, line := range lines { // For each line
 		if strings.Contains(line, "{{") && strings.Contains(line, "}}") { // Frala syntax
@@ -65,7 +65,7 @@ func Parse(file string) ParseResponse {
 				var parsedContext string
 				var context Context
 
-				syntaxEndSplit := strings.Split(lineSegment, "}}")                              // Split the segment based on the ending of the Frala syntax
+				syntaxEndSplit := strings.Split(lineSegment, "}}") // Split the segment based on the ending of the Frala syntax
 				fralaSyntaxContent := strings.TrimSpace(syntaxEndSplit[0])
 				fralaSyntaxProperties := strings.Split(fralaSyntaxContent, " ") // Split on whitespace
 
@@ -112,13 +112,13 @@ func (c *Context) Parse() string {
 
 	var parsedContext string
 
-	if (c.Type == "fragment") { // If this is a Fragment
+	if c.Type == "fragment" { // If this is a Fragment
 		if c.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
-			restoreFileName := CurrentParsingFile                                                              // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+			restoreFileName := CurrentParsingFile // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
 			c.Source = coreutils.AbsPath(CurrentParsingFile) + c.Source
 
 			fragmentParserResponse := Parse(c.Source) // Pass the Fragment file path to our Parse
-			CurrentParsingFile = restoreFileName                 // Restore file name back to original state
+			CurrentParsingFile = restoreFileName      // Restore file name back to original state
 
 			if fragmentParserResponse.Error == nil { // If there was no error reading the fragment file
 				parsedContext = fragmentParserResponse.Content // Set parsedContext to fragment ParserResponse Content
@@ -128,27 +128,27 @@ func (c *Context) Parse() string {
 		} else { // If we're attempting Fragment inception
 			parsedContext = "Cannot import " + c.Source + " within itself."
 		}
-	} else if (c.Type == "term")  { // If this is a term
-		switch (c.Source) {
-			case "frala.CurrentLanguage":
-				parsedContext = Config.CurrentLanguage
-				break;
-			case "frala.DefaultLanguage":
-				parsedContext = Config.DefaultLanguage
-				break;
-			case "frala.Direction":
-				parsedContext = Config.Direction
-				break;
-			case "frala.Languages":
-				if len(Config.Languages) != 0 { // If there was languages defined in the Config
-					parsedContext = strings.Join(Config.Languages, ",")
-				} else { // If there are no languages defined in the Config.Languages
-					parsedContext = Config.DefaultLanguage // Return the DefaultLanguage instead
-				}
-				break;
-			default:
-				parsedContext = GetValue(c.Source, c.Lang) // Get the Language value of this Source in Terms
-				break;
+	} else if c.Type == "term" { // If this is a term
+		switch c.Source {
+		case "frala.CurrentLanguage":
+			parsedContext = Config.CurrentLanguage
+			break
+		case "frala.DefaultLanguage":
+			parsedContext = Config.DefaultLanguage
+			break
+		case "frala.Direction":
+			parsedContext = Config.Direction
+			break
+		case "frala.Languages":
+			if len(Config.Languages) != 0 { // If there was languages defined in the Config
+				parsedContext = strings.Join(Config.Languages, ",")
+			} else { // If there are no languages defined in the Config.Languages
+				parsedContext = Config.DefaultLanguage // Return the DefaultLanguage instead
+			}
+			break
+		default:
+			parsedContext = GetValue(c.Source, c.Lang) // Get the Language value of this Source in Terms
+			break
 		}
 	} else {
 		parsedContext = c.Type + " is not a valid type."
