@@ -5,6 +5,7 @@ package frala
 import (
 	"encoding/json"
 	"errors"
+	"github.com/StroblIndustries/coreutils"
 	"io/ioutil"
 )
 
@@ -36,11 +37,7 @@ func SaveConfig() error {
 	configContent, saveError = json.MarshalIndent(Config, "", "\t") // Encode the Config into configContent, ensure it maintains pretty formatting. If encoding fails, set saveError
 
 	if saveError == nil { // If there was no error encoding
-		saveError = ioutil.WriteFile("frala.json", configContent, 0755) // Attempt to write the configContent to frala.json
-
-		if saveError != nil {
-			saveError = errors.New("Failed to save the Config to frala.json: " + saveError.Error())
-		}
+		saveError = coreutils.WriteOrUpdateFile("frala.json", configContent, coreutils.NonGlobalFileMode) // Attempt to write the configContent to frala.json
 	} else { // If we failed to encode the Config to JSON
 		saveError = errors.New("Failed to encode the Config to JSON: " + saveError.Error())
 	}
