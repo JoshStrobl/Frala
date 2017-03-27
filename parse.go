@@ -3,148 +3,156 @@
 package frala
 
 import (
-	"encoding/json"
 	"errors"
+	"github.com/StroblIndustries/coreutils"
 	"io/ioutil"
-	"path/filepath"
 	"strings"
 )
 
-// MultiParse parses multiple files provided and return a map of ParseResponses
-func MultiParse(files []string) map[string]ParseResponse {
-	parserResponses := make(map[string]ParseResponse)
+// MultiParse
+// Parses multiple files provided and return a map of ParseResponses
+func MultiParse(files []string) []ParseResponse {
+	var parseResponses []ParseResponse
 
 	for _, file := range files { // For each file
 		if strings.HasSuffix(file, ".html") { // If this is an HTML file
-			parserResponses[file] = Parse(file) // Define this file in parserResponses to ParserResponse provided by Parse
+			parseResponses = append(parseResponses, Parse(file))
 		}
+	}
+
+	return parseResponses
+}
+
+// MultilingualParse
+// Parses all provided files using all available languages
+// Returns a map of languages cooresponding to an array of ParseResponse
+func MultilingualParse(files []string) map[string][]ParseResponse {
+	parserResponses := make(map[string][]ParseResponse)
+
+	for _, lang := range Config.Languages { // For each of our languages
+		Config.CurrentLanguage = lang
+		parserResponses[lang] = MultiParse(files)
 	}
 
 	return parserResponses
 }
 
-// Parse parses a file provided and return a ParseResponse
+// Parse
+// Parses a file
 func Parse(file string) ParseResponse {
-	parserResponse := ParseResponse{}
-	fileContentBytes, fileContentError := ioutil.ReadFile(file) // Read the file content and push error to fileContentError
+	var contentBytes []byte
+	var parseResponse ParseResponse
 
-	if fileContentError == nil { /// If there was no error reading the file
-		var parsedString string
+	parseResponse.Name = file
+	contentBytes, parseResponse.Error = ioutil.ReadFile(file) // Read the file, set any read error to parseResponse.Error
 
-		CurrentParsingFile = file // Set CurrentParsingFile to this file
-		fileContent := string(fileContentBytes[:])
-		fileSplitLines := strings.Split(fileContent, "\n") // Split by new line
-
-		for _, line := range fileSplitLines { // For each line
-			parsedString += ParseLine(line) + "\n"
-		}
-
-		parserResponse.Content = parsedString
-	} else {
-		parserResponse.Error = errors.New(file + " does not exist.")
+	if len(contentBytes) == 0 || parseResponse.Error != nil {
+		parseResponse.Error = errors.New("Failed to read: " + file)
+		return parseResponse
 	}
 
-	return parserResponse
-}
+	content := string(contentBytes[:])
+	lines := strings.Split(content, "\n") // Split the string up into lines
+	newLines := []string{} // Create a newLines slice that'll contain our content
 
-// ParseLine parses an individual line
-func ParseLine(lineContent string) string {
-	parsedLineContent := lineContent                                                // Default parsedLineContent as the lineContent
-	if strings.Contains(lineContent, "{{") && strings.Contains(lineContent, "}}") { // If this has Frala syntax in it (has both { and })
-		var newLineContent string // Define newLineContent as the new line content we will return
+	for _, line := range lines { // For each line
+		if strings.Contains(line, "{{") && strings.Contains(line, "}}") { // Frala syntax
+			var newLineContent string // Define newLineContent as the new line content we will return
 
-		multiSyntaxSplit := strings.Split(lineContent, "{{") // Split the lineContent into segments based on {
+			multiSyntaxSplit := strings.Split(line, "{{") // Split the line into segments based on {{
 
-		for _, lineSegment := range multiSyntaxSplit { // For each segment of the line
-			if strings.Contains(lineSegment, "}}") { // If this segment of the line contains }
+			for _, lineSegment := range multiSyntaxSplit { // For each segment of the line
+				var parsedContext string
+				var context Context
+
 				syntaxEndSplit := strings.Split(lineSegment, "}}")                              // Split the segment based on the ending of the Frala syntax
-				parsedSyntax := ParseSyntax("{{" + strings.TrimSpace(syntaxEndSplit[0]) + "}}") // Parse the syntax and return it
-				contentAfterFralaSyntax := syntaxEndSplit[1]                                    // Set Frala
+				fralaSyntaxContent := strings.TrimSpace(syntaxEndSplit[0])
+				fralaSyntaxProperties := strings.Split(fralaSyntaxContent, " ") // Split on whitespace
 
-				newLineContent += parsedSyntax + contentAfterFralaSyntax
-			} else { // If this segment does not contain an end-syntax, meaning it is likely a segment prior to the syntax
-				newLineContent += lineSegment // Add the lineSegment to the newLineContent
+				for _, property := range fralaSyntaxProperties {
+					propertyValueSplit := strings.Split(strings.Replace(property, "\"", "", -1), "=")
+					property := propertyValueSplit[0]
+					value := propertyValueSplit[1]
+
+					if property == "lang" {
+						context.Lang = value
+					} else if property == "src" {
+						context.Source = value
+					} else if property == "type" {
+						context.Type = value
+					}
+				}
+
+				parsedContext += context.Parse()
+				contentAfterFralaSyntax := syntaxEndSplit[1]
+
+				newLineContent += parsedContext + contentAfterFralaSyntax
 			}
-		}
 
-		parsedLineContent = newLineContent
+			newLines = append(newLines, newLineContent)
+		} else { // Not Frala syntax
+			newLines = append(newLines, line)
+		}
 	}
 
-	return parsedLineContent
+	parseResponse.Content = strings.Join(newLines, "\n")
+	return parseResponse
 }
 
-// ParseSyntax parses a Frala syntax string and return the appropriate (if any) associated HTML content or term
-func ParseSyntax(fralaSyntax string) string {
-	parsedString := fralaSyntax // Default parsedString to fralaSyntax
-
-	var fralaContext Context // Define fralaContext as a Context struct
-
-	// #region Convert Frala syntax to JSON
-
-	fralaSyntaxJSON := fralaSyntax                                                      // Initially set fralaSyntaxJSON to fralaSyntax
-	searchStrings := []string{"{{", "}}", "\" ", "=", "lang", "src", "type"}            // Array of things we need to search for
-	replaceStrings := []string{"{", "}", "\",", ":", "\"lang\"", "\"src\"", "\"type\""} // Array of things we'll replace
-
-	for pos, searchString := range searchStrings { // For each searchString in searchStrings
-		fralaSyntaxJSON = strings.Replace(fralaSyntaxJSON, searchString, replaceStrings[pos], -1) // Replace the searchString with the cooresponding replaceString
+// Context Parse
+// Parses a Frala context and returns a string
+func (c *Context) Parse() string {
+	if c.Lang == "" && c.Type == "term" { // If Lang isn't set for term
+		c.Lang = Config.CurrentLanguage // Set to the current parsing language.
+	} else if c.Source == "" { // No Source set
+		return "Source for this Frala syntax not specified."
+	} else if c.Type == "" { // No Type set
+		return "Type for this Frala syntax not specified."
 	}
 
-	// #endregion
+	var parsedContext string
 
-	decodeErr := json.Unmarshal([]byte(fralaSyntaxJSON), &fralaContext) // Decode fralaSyntaxJSON into fralaContext
+	if (c.Type == "fragment") { // If this is a Fragment
+		if c.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
+			restoreFileName := CurrentParsingFile                                                              // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
+			c.Source = coreutils.AbsPath(CurrentParsingFile) + c.Source
 
-	if decodeErr == nil { // If there was no decode error
-		if (fralaContext.Type == "") { // If no type was defined
-			return "No type provided for this Frala context."
-		} else if (fralaContext.Source == "") { // If no source was provided
-			return "No source provided for this Frala context."
-		}
+			fragmentParserResponse := Parse(c.Source) // Pass the Fragment file path to our Parse
+			CurrentParsingFile = restoreFileName                 // Restore file name back to original state
 
-		if (fralaContext.Type == "fragment") { // If this is a Fragment
-			if fralaContext.Source != CurrentParsingFile { // If we're not doing some crazy import fragment within itself sorcery
-				restoreFileName := CurrentParsingFile                                                              // Set restoreFileName to CurrentParsingFile before doing any potential crazy business
-				fralaContext.Source = filepath.Clean(filepath.Dir(CurrentParsingFile) + "/" + fralaContext.Source) // Ensure we have prepend the directory of the current parsing file
-
-				fragmentParserResponse := Parse(fralaContext.Source) // Attempt to read the fragment
-				CurrentParsingFile = restoreFileName                 // Restore file name back to original state
-
-				if fragmentParserResponse.Error == nil { // If there was no error reading the fragment file
-					parsedString = fragmentParserResponse.Content // Set parsedString to fragment ParserResponse Content
-				} else { // If the fragment file does not exist
-					parsedString = fragmentParserResponse.Error.Error() // Get the parser response error
-				}
-			} else { // If we're attempting Fragment inception
-				parsedString = "I can't do that Dave. (Importing Fragment within itself)"
+			if fragmentParserResponse.Error == nil { // If there was no error reading the fragment file
+				parsedContext = fragmentParserResponse.Content // Set parsedContext to fragment ParserResponse Content
+			} else { // If the fragment file does not exist
+				parsedContext = fragmentParserResponse.Error.Error() // Get the parser response error
 			}
-		} else if (fralaContext.Type == "term")  { // If this is a term
-			if strings.HasPrefix(fralaContext.Source, "frala.") { // If we are actually fetching an option from Frala
-				switch (fralaContext.Source) {
-					case "frala.DefaultLanguage":
-						parsedString = Config.DefaultLanguage
-						break;
-					case "frala.Direction":
-						parsedString = Config.Direction
-						break;
-					case "frala.Languages":
-						if len(Config.Languages) != 0 { // If there was languages defined in the Config
-							parsedString = strings.Join(Config.Languages, ",")
-						} else { // If there are no languages defined in the Config.Languages
-							parsedString = Config.DefaultLanguage // Return the DefaultLanguage instead
-						}
-						break;
-					default:
-						parsedString = fralaContext.Source + " is not a valid Frala Built-in term."
-						break;
-				}
-			} else { // If this is a "normal" term
-				parsedString = GetValue(fralaContext.Source, fralaContext.Lang) // Get the Language value of this Source in Terms
-
-				if strings.Contains(parsedString, "is not translated") { // If the string is not translated
-					parsedString = fralaSyntax; // Change back to using fralaSyntax
-				}
-			}
+		} else { // If we're attempting Fragment inception
+			parsedContext = "Cannot import " + c.Source + " within itself."
 		}
+	} else if (c.Type == "term")  { // If this is a term
+		switch (c.Source) {
+			case "frala.CurrentLanguage":
+				parsedContext = Config.CurrentLanguage
+				break;
+			case "frala.DefaultLanguage":
+				parsedContext = Config.DefaultLanguage
+				break;
+			case "frala.Direction":
+				parsedContext = Config.Direction
+				break;
+			case "frala.Languages":
+				if len(Config.Languages) != 0 { // If there was languages defined in the Config
+					parsedContext = strings.Join(Config.Languages, ",")
+				} else { // If there are no languages defined in the Config.Languages
+					parsedContext = Config.DefaultLanguage // Return the DefaultLanguage instead
+				}
+				break;
+			default:
+				parsedContext = GetValue(c.Source, c.Lang) // Get the Language value of this Source in Terms
+				break;
+		}
+	} else {
+		parsedContext = c.Type + " is not a valid type."
 	}
 
-	return parsedString
+	return parsedContext
 }
