@@ -98,15 +98,15 @@ func ParseFiles(parseFiles string) {
 	filesToParse := strings.Split(parseFiles, ",")   // Split the comma-separated parseFiles to filesToParse
 	parseResponses := frala.MultiParse(filesToParse) // Parse each file
 
-	for fileName, parseResponse := range parseResponses { // For each parseResponse
+	for _, parseResponse := range parseResponses { // For each parseResponse
 		if parseResponse.Error == nil { // If there was no issue parsing this file
 			if parseResponse.Content != "" { // If the content is not empty
-				fileNameNoPath := filepath.Base(fileName) // Get the base filename
+				fileNameNoPath := filepath.Base(parseResponse.Name) // Get the base filename
 				fmt.Println("Writing content to: " + TargetDirectory + fileNameNoPath)
 				os.MkdirAll(TargetDirectory, 0755) // Ensure the directory exists
 				ioutil.WriteFile(TargetDirectory+fileNameNoPath, []byte(parseResponse.Content), 0755)
 			} else { // If there was no content in the parseResponse.Content
-				fmt.Println("No content provided via parsing: " + fileName)
+				fmt.Println("No content provided via parsing: " + parseResponse.Name)
 			}
 		} else { // If there was an issue parsing this file
 			fmt.Println(parseResponse.Error) // Print the error
